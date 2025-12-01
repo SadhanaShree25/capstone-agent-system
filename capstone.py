@@ -1,8 +1,9 @@
-# gui_capstone_full.py
+# gui_capstone_full_corrected.py
 import json
 import uuid
 from datetime import datetime, timedelta
 import threading
+import time
 import tkinter as tk
 from tkinter import ttk, messagebox
 import csv
@@ -44,13 +45,12 @@ def parse_task_input(text):
     priority = "Medium"
     recurrence = "None"
 
-    time_match = re.search(r'(\d+)\s*minute', text)
+    time_match = re.search(r'(\d+)\s*minute', text, re.IGNORECASE)
     if time_match:
         minutes = int(time_match.group(1))
-    if "hour" in text.lower():
-        hour_match = re.search(r'(\d+)\s*hour', text)
-        if hour_match:
-            minutes = int(hour_match.group(1)) * 60
+    hour_match = re.search(r'(\d+)\s*hour', text, re.IGNORECASE)
+    if hour_match:
+        minutes = int(hour_match.group(1)) * 60
     if "tomorrow" in text.lower():
         minutes = 24*60
     if "urgent" in text.lower() or "important" in text.lower():
@@ -68,31 +68,37 @@ class CapstoneGUI:
         self.root = root
         self.root.title("🧠 Capstone AI Task & Reminder Agent")
         self.tasks = load_tasks()
+
+        # Reminder control
         self.reminder_running = False
         self.reminder_thread = None
+        self.stop_event = threading.Event()
 
         # ---------------- Input Frame ----------------
         input_frame = tk.Frame(root)
         input_frame.pack(pady=10)
 
-        tk.Label(input_frame, text="Enter Task:").grid(row=0, column=0)
+        tk.Label(input_frame, text="Enter Task:").grid(row=0, column=0, sticky="w")
         self.task_entry = tk.Entry(input_frame, width=50)
-        self.task_entry.grid(row=0, column=1, columnspan=3)
+        self.task_entry.grid(row=0, column=1, columnspan=3, sticky="we")
 
-        tk.Label(input_frame, text="Reminder (min):").grid(row=1, column=0)
+        tk.Label(input_frame, text="Reminder (min):").grid(row=1, column=0, sticky="w")
         self.minutes_entry = tk.Entry(input_frame, width=5)
         self.minutes_entry.insert(0, "10")
-        self.minutes_entry.grid(row=1, column=1)
+        self.minutes_entry.grid(row=1, column=1, sticky="w")
 
-        tk.Label(input_frame, text="Recurrence:").grid(row=1, column=2)
+        tk.Label(input_frame, text="Recurrence:").grid(row=1, column=2, sticky="w")
         self.recur_var = tk.StringVar(value="None")
-        recur_menu = ttk.Combobox(input_frame, textvariable=self.recur_var,
-                                  values=["None","Daily","Weekly","Monthly"], width=12)
-        recur_menu.grid(row=1, column=3)
+        recur_menu = ttk.Combobox(
+            input_frame, textvariable=self.recur_var,
+            values=["None","Daily","Weekly","Monthly"], width=12, state="readonly"
+        )
+        recur_menu.grid(row=1, column=3, sticky="w")
 
         # ---------------- Buttons ----------------
         button_frame = tk.Frame(root)
         button_frame.pack(pady=10)
+
         tk.Button(button_frame, text="Add Task", command=self.add_task).grid(row=0, column=0, padx=5)
         tk.Button(button_frame, text="Start Reminders", command=self.start_reminders).grid(row=0, column=1, padx=5)
         tk.Button(button_frame, text="Stop Reminders", command=self.stop_reminders).grid(row=0, column=2, padx=5)
@@ -101,29 +107,36 @@ class CapstoneGUI:
         tk.Button(button_frame, text="Add Demo Tasks", command=self.add_demo).grid(row=0, column=5, padx=5)
         tk.Button(button_frame, text="Exit", command=root.quit).grid(row=0, column=6, padx=5)
 
+        # Running status label
+        self.status_var = tk.StringVar(value="Reminders: Stopped")
+        tk.Label(root, textvariable=self.status_var, fg="gray").pack(pady=(0, 5))
+
         # ---------------- Task List ----------------
         columns = ("ID","Task","Due Time","Category","Priority","Recurrence","Completed")
         self.tree = ttk.Treeview(root, columns=columns, show="headings", height=12)
         for col in columns:
             self.tree.heading(col, text=col)
-            self.tree.column(col, width=100)
-        self.tree.pack()
+            width = 120 if col != "Task" else 220
+            self.tree.column(col, width=width, anchor="w")
+        self.tree.pack(fill="both", expand=True)
         self.update_task_list()
 
     # ---------------- Add Task ----------------
     def add_task(self):
-        text = self.task_entry.get()
+        text = self.task_entry.get().strip()
         if not text:
             messagebox.showwarning("Input Error", "Please enter a task.")
             return
         try:
             custom_minutes = int(self.minutes_entry.get())
-        except:
+        except ValueError:
             custom_minutes = 10
+
         desc, _, category, priority, _ = parse_task_input(text)
         recurrence = self.recur_var.get()
         task_id = str(uuid.uuid4())
         due_time = (datetime.now() + timedelta(minutes=custom_minutes)).isoformat()
+
         task = {
             "id": task_id,
             "description": desc,
@@ -143,10 +156,14 @@ class CapstoneGUI:
         for i in self.tree.get_children():
             self.tree.delete(i)
         for task in self.tasks:
+            try:
+                time_part = task["due_time"].split("T")[1][:8]
+            except Exception:
+                time_part = task["due_time"]
             values = (
                 task["id"],
                 task["description"],
-                task["due_time"].split("T")[1][:8],
+                time_part,
                 task["category"],
                 task["priority"],
                 task.get("recurrence","None"),
@@ -156,46 +173,82 @@ class CapstoneGUI:
 
     # ---------------- Reminder Loop ----------------
     def reminder_loop(self):
-        while self.reminder_running:
+        while not self.stop_event.is_set():
             now = datetime.now()
-            for task in self.tasks:
-                due_time = datetime.fromisoformat(task["due_time"])
-                if not task["completed"] and now >= due_time:
-                    winsound.Beep(1000, 500)  # sound alert
-                    self.show_popup(f"Task Due: {task['description']}")
-                    task["completed"] = True
-                    # Handle recurrence
-                    if task.get("recurrence") == "Daily":
-                        task["completed"] = False
-                        task["due_time"] = (due_time + timedelta(days=1)).isoformat()
-                    elif task.get("recurrence") == "Weekly":
-                        task["completed"] = False
-                        task["due_time"] = (due_time + timedelta(weeks=1)).isoformat()
-                    elif task.get("recurrence") == "Monthly":
-                        task["completed"] = False
-                        task["due_time"] = (due_time + timedelta(days=30)).isoformat()
-            save_tasks(self.tasks)
-            self.update_task_list()
-            threading.Event().wait(REMINDER_INTERVAL)
+            due_tasks = []
 
+            for task in self.tasks:
+                try:
+                    due_time = datetime.fromisoformat(task["due_time"])
+                except Exception:
+                    continue
+
+                if not task["completed"] and now >= due_time:
+                    due_tasks.append(task)
+
+            if due_tasks:
+                try:
+                    winsound.Beep(1000, 500)
+                except Exception:
+                    pass
+                self.root.after(0, self.process_due_tasks_ui, [t["id"] for t in due_tasks])
+
+            time.sleep(REMINDER_INTERVAL)
+
+    # ---------------- Process due tasks ----------------
+    def process_due_tasks_ui(self, due_task_ids):
+        for tid in due_task_ids:
+            task = next((t for t in self.tasks if t["id"] == tid), None)
+            if not task:
+                continue
+
+            self.show_popup(f"Task Due: {task['description']}")
+            task["completed"] = True
+            due_time = datetime.fromisoformat(task["due_time"])
+
+            rec = task.get("recurrence")
+            if rec == "Daily":
+                task["completed"] = False
+                task["due_time"] = (due_time + timedelta(days=1)).isoformat()
+            elif rec == "Weekly":
+                task["completed"] = False
+                task["due_time"] = (due_time + timedelta(weeks=1)).isoformat()
+            elif rec == "Monthly":
+                task["completed"] = False
+                task["due_time"] = (due_time + timedelta(days=30)).isoformat()
+
+        save_tasks(self.tasks)
+        self.update_task_list()
+        self.status_var.set(f"Reminders: Running ({len(due_task_ids)} task(s) alerted)")
     # ---------------- Pop-up ----------------
     def show_popup(self, message, duration=3000):
-        popup = tk.Toplevel()
+        popup = tk.Toplevel(self.root)
         popup.title("Reminder")
-        popup.geometry("300x100+500+200")
-        tk.Label(popup, text=message, font=("Arial", 12), fg="blue").pack(expand=True)
+        popup.geometry("320x110+500+200")
+        label = tk.Label(popup, text=message, font=("Arial", 12), fg="blue", wraplength=280)
+        label.pack(expand=True, padx=10, pady=10)
+        # Auto-close after duration (milliseconds)
         popup.after(duration, popup.destroy)
 
     # ---------------- Start / Stop Reminders ----------------
     def start_reminders(self):
-        if not self.reminder_running:
-            self.reminder_running = True
-            self.reminder_thread = threading.Thread(target=self.reminder_loop, daemon=True)
-            self.reminder_thread.start()
-            messagebox.showinfo("Reminders", "Auto reminders started!")
+        if self.reminder_running:
+            messagebox.showinfo("Reminders", "Auto reminders already running.")
+            return
+        self.reminder_running = True
+        self.stop_event.clear()
+        self.reminder_thread = threading.Thread(target=self.reminder_loop, daemon=True)
+        self.reminder_thread.start()
+        self.status_var.set("Reminders: Running")
+        messagebox.showinfo("Reminders", "Auto reminders started!")
 
     def stop_reminders(self):
+        if not self.reminder_running:
+            messagebox.showinfo("Reminders", "Auto reminders already stopped.")
+            return
         self.reminder_running = False
+        self.stop_event.set()
+        self.status_var.set("Reminders: Stopped")
         messagebox.showinfo("Reminders", "Auto reminders stopped!")
 
     # ---------------- Delete Completed ----------------
@@ -204,8 +257,7 @@ class CapstoneGUI:
         if not completed_tasks:
             messagebox.showinfo("Delete", "No completed tasks to delete.")
             return
-        for t in completed_tasks:
-            self.tasks.remove(t)
+        self.tasks = [t for t in self.tasks if not t["completed"]]
         save_tasks(self.tasks)
         self.update_task_list()
         messagebox.showinfo("Delete", "Completed tasks deleted.")

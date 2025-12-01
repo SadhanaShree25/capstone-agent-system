@@ -20,7 +20,7 @@
     {
         "id": "b2859e78-6928-4ef3-bf87-4278dfbdfe1d",
         "description": "learn",
-        "due_time": "2025-12-01T18:53:43.470339",
+        "due_time": "2025-12-02T18:53:43.470339",
         "category": "Work",
         "priority": "Medium",
         "recurrence": "Daily",
@@ -65,7 +65,16 @@
     {
         "id": "e12df6a3-c3b3-4ff1-982d-170a11b0f295",
         "description": "call office",
-        "due_time": "2025-12-01T19:02:20.418082",
+        "due_time": "2025-12-02T19:02:20.418082",
+        "category": "Work",
+        "priority": "Medium",
+        "recurrence": "Daily",
+        "completed": false
+    },
+    {
+        "id": "2f725d2e-3024-4c94-8858-25cf0c77f77b",
+        "description": "learn java",
+        "due_time": "2025-12-01T19:57:39.830748",
         "category": "Work",
         "priority": "Medium",
         "recurrence": "Daily",
