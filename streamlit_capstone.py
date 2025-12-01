@@ -1,10 +1,11 @@
-# streamlit_capstone_full.py
+# streamlit_capstone_autoreminder.py
 import streamlit as st
 import json
 import uuid
 from datetime import datetime, timedelta
 import csv
 import re
+from streamlit_autorefresh import st_autorefresh
 
 # ---------------- Constants ----------------
 TASK_FILE = "tasks.json"
@@ -26,20 +27,27 @@ def export_to_csv(tasks):
         writer = csv.writer(f)
         writer.writerow(["ID","Task","Due Time","Category","Priority","Recurrence","Completed"])
         for t in tasks:
-            writer.writerow([t["id"], t["description"], t["due_time"], t["category"], t["priority"], t.get("recurrence","None"), t["completed"]])
+            writer.writerow([
+                t["id"], t["description"], t["due_time"], t["category"],
+                t["priority"], t.get("recurrence","None"), t["completed"]
+            ])
     st.success("Tasks exported to tasks.csv")
 
 # ---------------- Mock AI Parser ----------------
 def parse_task_input(text):
     description = text
-    minutes = 10
+    minutes = 10  # default due time
     category = "Work"
     priority = "Medium"
     recurrence = "None"
 
-    time_match = re.search(r'(\d+(\.\d+)?)\s*minute', text)
+    time_match = re.search(r'(\d+)\s*minute', text)
     if time_match:
-        minutes = float(time_match.group(1))
+        minutes = int(time_match.group(1))
+    if "hour" in text.lower():
+        hour_match = re.search(r'(\d+)\s*hour', text)
+        if hour_match:
+            minutes = int(hour_match.group(1)) * 60
     if "tomorrow" in text.lower():
         minutes = 24*60
     if "urgent" in text.lower() or "important" in text.lower():
@@ -48,6 +56,7 @@ def parse_task_input(text):
         category = "Study"
     elif "personal" in text.lower():
         category = "Personal"
+
     return description, minutes, category, priority, recurrence
 
 # ---------------- Streamlit App ----------------
@@ -55,16 +64,21 @@ st.title("🧠 Capstone AI Task & Reminder Agent (Web Version)")
 
 tasks = load_tasks()
 
-# ---------------- Task Input ----------------
+# ---------------- Auto Refresh for Real-Time Reminders ----------------
+# Refresh every 10 seconds
+st_autorefresh(interval=10 * 1000, key="auto_refresh")
+
+# ---------------- Add New Task ----------------
 with st.expander("Add New Task"):
     task_text = st.text_input("Enter Task (natural language):")
+    custom_minutes = st.number_input("Set Reminder in minutes:", min_value=1, value=10)
     recurrence = st.selectbox("Recurrence", ["None","Daily","Weekly","Monthly"])
     add_button = st.button("Add Task")
 
 if add_button and task_text:
-    desc, minutes, category, priority, _ = parse_task_input(task_text)
+    desc, _, category, priority, _ = parse_task_input(task_text)
     task_id = str(uuid.uuid4())
-    due_time = (datetime.now() + timedelta(minutes=minutes)).isoformat()
+    due_time = (datetime.now() + timedelta(minutes=custom_minutes)).isoformat()
     task = {
         "id": task_id,
         "description": desc,
@@ -76,66 +90,55 @@ if add_button and task_text:
     }
     tasks.append(task)
     save_tasks(tasks)
-    st.success(f"Task added: {desc}")
+    st.success(f"Task added: {desc} | Reminder in {custom_minutes} minutes")
 
-# ---------------- Task Table with Manual Reminders ----------------
+# ---------------- Task List ----------------
 st.subheader("📋 Task List")
-
 if tasks:
     for t in tasks:
         status = "✅ Done" if t["completed"] else "⏳ Pending"
-        st.write(f"**{t['description']}** | Due: {t['due_time'].split('T')[1][:8]} | "
-                 f"Category: {t['category']} | Priority: {t['priority']} | "
-                 f"Recurrence: {t.get('recurrence','None')} | Status: {status}")
-
-        # Manual reminder button
-        if st.button(f"Set Reminder for: {t['description']}"):
-            due_time_obj = datetime.fromisoformat(t["due_time"])
-            now = datetime.now()
-            if not t["completed"] and now >= due_time_obj:
-                st.balloons()
-                st.info(f"🔔 Task Reminder: {t['description']}")
-                t["completed"] = True
-                # Handle recurrence
-                if t.get("recurrence") == "Daily":
-                    t["completed"] = False
-                    t["due_time"] = (due_time_obj + timedelta(days=1)).isoformat()
-                elif t.get("recurrence") == "Weekly":
-                    t["completed"] = False
-                    t["due_time"] = (due_time_obj + timedelta(weeks=1)).isoformat()
-                elif t.get("recurrence") == "Monthly":
-                    t["completed"] = False
-                    t["due_time"] = (due_time_obj + timedelta(days=30)).isoformat()
-            elif not t["completed"] and now < due_time_obj:
-                st.warning(f"⏳ Task '{t['description']}' is not due yet. Will trigger at {t['due_time'].split('T')[1][:8]}")
-            save_tasks(tasks)
+        st.write(f"**{t['description']}** | Due: {t['due_time'].split('T')[1][:8]} | Category: {t['category']} | Priority: {t['priority']} | Recurrence: {t.get('recurrence','None')} | Status: {status}")
 else:
     st.write("No tasks added yet.")
 
-# ---------------- Test/Demo Mode ----------------
-if st.button("Run Demo Tasks"):
-    demo_texts = [
-        "Submit Kaggle Capstone in 0.1 minute",
-        "Call friend in 0.2 minute",
-        "Complete Python notebook in 0.3 minute"
-    ]
-    for t_text in demo_texts:
-        desc, minutes, category, priority, _ = parse_task_input(t_text)
-        task_id = str(uuid.uuid4())
-        due_time = (datetime.now() + timedelta(minutes=minutes)).isoformat()
-        task = {
-            "id": task_id,
-            "description": desc,
-            "due_time": due_time,
-            "category": category,
-            "priority": priority,
-            "recurrence": "None",
-            "completed": False
-        }
-        tasks.append(task)
-    save_tasks(tasks)
-    st.success("Demo tasks added!")
+# ---------------- Auto Reminder Check ----------------
+def check_reminders_auto():
+    now = datetime.now()
+    triggered = False
+    for task in tasks:
+        due_time = datetime.fromisoformat(task["due_time"])
+        if not task["completed"] and now >= due_time:
+            st.balloons()
+            st.info(f"🔔 Task Due: {task['description']}")
+            task["completed"] = True
+            triggered = True
+            # Handle recurrence
+            if task.get("recurrence") == "Daily":
+                task["completed"] = False
+                task["due_time"] = (due_time + timedelta(days=1)).isoformat()
+            elif task.get("recurrence") == "Weekly":
+                task["completed"] = False
+                task["due_time"] = (due_time + timedelta(weeks=1)).isoformat()
+            elif task.get("recurrence") == "Monthly":
+                task["completed"] = False
+                task["due_time"] = (due_time + timedelta(days=30)).isoformat()
+    if triggered:
+        save_tasks(tasks)
+
+check_reminders_auto()
 
 # ---------------- Export CSV ----------------
 if st.button("Export Tasks to CSV"):
     export_to_csv(tasks)
+
+# ---------------- Delete Completed Task ----------------
+st.subheader("🗑️ Delete Completed Tasks")
+completed_tasks = [t for t in tasks if t["completed"]]
+if completed_tasks:
+    task_to_delete = st.selectbox("Select Task to Delete:", [t["description"] for t in completed_tasks])
+    if st.button("Delete Task"):
+        tasks[:] = [t for t in tasks if t["description"] != task_to_delete]
+        save_tasks(tasks)
+        st.success(f"Deleted task: {task_to_delete}")
+else:
+    st.write("No completed tasks to delete.")
