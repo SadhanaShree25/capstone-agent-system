@@ -37,9 +37,9 @@ def parse_task_input(text):
     priority = "Medium"
     recurrence = "None"
 
-    time_match = re.search(r'(\d+)\s*minute', text)
+    time_match = re.search(r'(\d+(\.\d+)?)\s*minute', text)
     if time_match:
-        minutes = int(time_match.group(1))
+        minutes = float(time_match.group(1))
     if "tomorrow" in text.lower():
         minutes = 24*60
     if "urgent" in text.lower() or "important" in text.lower():
@@ -51,14 +51,16 @@ def parse_task_input(text):
     return description, minutes, category, priority, recurrence
 
 # ---------------- Streamlit App ----------------
+st.set_page_config(page_title="Capstone AI Task Agent", layout="wide")
 st.title("🧠 Capstone AI Task & Reminder Agent (Web Version)")
 
+# Load tasks
 tasks = load_tasks()
 
 # ---------------- Task Input ----------------
 with st.expander("Add New Task"):
     task_text = st.text_input("Enter Task (natural language):")
-    recurrence = st.selectbox("Recurrence", ["None","Daily","Weekly","Monthly"])
+    recurrence_option = st.selectbox("Recurrence", ["None","Daily","Weekly","Monthly"])
     add_button = st.button("Add Task")
 
 if add_button and task_text:
@@ -71,24 +73,40 @@ if add_button and task_text:
         "due_time": due_time,
         "category": category,
         "priority": priority,
-        "recurrence": recurrence,
+        "recurrence": recurrence_option,
         "completed": False
     }
     tasks.append(task)
     save_tasks(tasks)
     st.success(f"Task added: {desc}")
 
+# ---------------- Clear All Tasks ----------------
+if st.button("Clear All Tasks"):
+    tasks = []
+    save_tasks(tasks)
+    st.success("All tasks cleared!")
+
 # ---------------- Task Table ----------------
 st.subheader("📋 Task List")
 if tasks:
+    # Remove duplicate descriptions for display
+    seen = set()
+    unique_tasks = []
     for t in tasks:
+        if t["description"] not in seen:
+            unique_tasks.append(t)
+            seen.add(t["description"])
+    for t in unique_tasks:
         status = "✅ Done" if t["completed"] else "⏳ Pending"
-        st.write(f"**{t['description']}** | Due: {t['due_time'].split('T')[1][:8]} | Category: {t['category']} | Priority: {t['priority']} | Recurrence: {t.get('recurrence','None')} | Status: {status}")
+        st.write(f"**{t['description']}** | Due: {t['due_time'].split('T')[1][:8]} | "
+                 f"Category: {t['category']} | Priority: {t['priority']} | "
+                 f"Recurrence: {t.get('recurrence','None')} | Status: {status}")
 else:
     st.write("No tasks added yet.")
 
-# ---------------- Test/Demo Mode ----------------
+# ---------------- Demo Tasks ----------------
 if st.button("Run Demo Tasks"):
+    tasks = []  # Clear previous tasks
     demo_texts = [
         "Submit Kaggle Capstone in 0.1 minute",
         "Call friend in 0.2 minute",
