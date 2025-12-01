@@ -5,6 +5,8 @@ import uuid
 from datetime import datetime, timedelta
 import csv
 import re
+from streamlit_autorefresh import st_autorefresh
+
 
 # ---------------- Constants ----------------
 TASK_FILE = "tasks.json"
@@ -158,5 +160,11 @@ def check_reminders():
     save_tasks(tasks)
 
 if st.button("Check Reminders"):
+    # ---------------- Auto-Refresh for Reminders ----------------
+# Auto-refresh every 10 seconds (10000 milliseconds)
+    st_autorefresh(interval=10000, key="reminder_autorefresh")
+
+
+
     check_reminders()
     st.success("Reminders checked!")
