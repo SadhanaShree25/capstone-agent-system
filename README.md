@@ -32,6 +32,5 @@ git clone https://github.com/<your-username>/<repo-name>.git
 cd <repo-name>
 
 
-2.** Run the app: **
-
-python gui_capstone_full.py
+2.**Run the app:**
+  python gui_capstone_full.py
