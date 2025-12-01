@@ -1,0 +1,9 @@
+ID,Task,Due Time,Category,Priority,Recurrence,Completed
+4d6cf1f9-70b1-4141-85de-3fd17495137b,i want to finish project,2025-12-01T19:07:12.130887,Work,Medium,None,False
+aaa7d9bb-d543-4c54-930c-ecddb396b777,Test Task 1,2025-12-01T16:17:37.308665,Work,High,None,True
+d6643dc8-314d-403c-8bca-88edaf7fb907,Test Task 2,2025-12-01T16:17:43.308735,Personal,Medium,None,True
+7501aaee-be83-4c0b-ab30-25b12d056f51,Test Task 3,2025-12-01T16:17:49.308759,Study,Low,None,True
+ef5be32d-4005-4719-9a42-895f341817f3,Learn React,2025-12-01T16:40:41.205158,Study,Medium,None,False
+66eaf091-4683-47c3-93ea-059702f262f9,Submit Kaggle Capstone in 0.1 minute,2025-12-01T16:32:37.068910,Work,Medium,Daily,False
+20f455d5-4030-400b-b035-b5ae62190bda,Personal: Call friend in 0.2 minute,2025-12-01T16:33:37.071443,Personal,Medium,Daily,False
+ba6a572d-da82-4807-87b4-1fc8363faede,Study: Complete Python notebook in 0.3 minute,2025-12-01T16:34:37.072857,Study,Medium,Daily,False
