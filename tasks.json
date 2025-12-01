@@ -1,111 +1,8 @@
 [
     {
-        "id": "4d6cf1f9-70b1-4141-85de-3fd17495137b",
-        "description": "i want to finish project",
-        "due_time": "2025-12-01T19:07:12.130887",
-        "category": "Work",
-        "priority": "Medium",
-        "completed": false
-    },
-    {
-        "id": "aaa7d9bb-d543-4c54-930c-ecddb396b777",
-        "description": "Test Task 1",
-        "due_time": "2025-12-01T16:17:37.308665",
-        "category": "Work",
-        "priority": "High",
-        "completed": true
-    },
-    {
-        "id": "d6643dc8-314d-403c-8bca-88edaf7fb907",
-        "description": "Test Task 2",
-        "due_time": "2025-12-01T16:17:43.308735",
-        "category": "Personal",
-        "priority": "Medium",
-        "completed": true
-    },
-    {
-        "id": "7501aaee-be83-4c0b-ab30-25b12d056f51",
-        "description": "Test Task 3",
-        "due_time": "2025-12-01T16:17:49.308759",
-        "category": "Study",
-        "priority": "Low",
-        "completed": true
-    },
-    {
-        "id": "ef5be32d-4005-4719-9a42-895f341817f3",
-        "description": "Learn React",
-        "due_time": "2025-12-01T16:40:41.205158",
-        "category": "Study",
-        "priority": "Medium",
-        "completed": false
-    },
-    {
-        "id": "66eaf091-4683-47c3-93ea-059702f262f9",
-        "description": "Submit Kaggle Capstone in 0.1 minute",
-        "due_time": "2025-12-01T16:32:37.068910",
-        "category": "Work",
-        "priority": "Medium",
-        "recurrence": "Daily",
-        "completed": false
-    },
-    {
-        "id": "20f455d5-4030-400b-b035-b5ae62190bda",
-        "description": "Personal: Call friend in 0.2 minute",
-        "due_time": "2025-12-01T16:33:37.071443",
-        "category": "Personal",
-        "priority": "Medium",
-        "recurrence": "Daily",
-        "completed": false
-    },
-    {
-        "id": "ba6a572d-da82-4807-87b4-1fc8363faede",
-        "description": "Study: Complete Python notebook in 0.3 minute",
-        "due_time": "2025-12-01T16:34:37.072857",
-        "category": "Study",
-        "priority": "Medium",
-        "recurrence": "Daily",
-        "completed": false
-    },
-    {
-        "id": "1fafe8a6-a83f-48d2-8216-488487ac393e",
-        "description": "Submit Kaggle Capstone in 0.1 minute",
-        "due_time": "2025-12-01T16:32:53.900245",
-        "category": "Work",
-        "priority": "Medium",
-        "recurrence": "Daily",
-        "completed": false
-    },
-    {
         "id": "194c3f76-7f8d-4d1e-9c5f-68fa5c9a3615",
         "description": "Personal: Call friend in 0.2 minute",
-        "due_time": "2025-12-01T16:33:53.902992",
-        "category": "Personal",
-        "priority": "Medium",
-        "recurrence": "Daily",
-        "completed": false
-    },
-    {
-        "id": "c298400f-94d8-456b-9534-71ba08410b5d",
-        "description": "Study: Complete Python notebook in 0.3 minute",
-        "due_time": "2025-12-01T16:34:53.904783",
-        "category": "Study",
-        "priority": "Medium",
-        "recurrence": "Daily",
-        "completed": false
-    },
-    {
-        "id": "49442d9b-f628-4216-856d-127d7fbdb114",
-        "description": "Submit Kaggle Capstone in 0.1 minute",
-        "due_time": "2025-12-01T16:32:55.207289",
-        "category": "Work",
-        "priority": "Medium",
-        "recurrence": "Daily",
-        "completed": false
-    },
-    {
-        "id": "5329338b-bdd7-404a-b765-ceab6b97e5fe",
-        "description": "Personal: Call friend in 0.2 minute",
-        "due_time": "2025-12-01T16:33:55.209558",
+        "due_time": "2025-12-02T16:33:53.902992",
         "category": "Personal",
         "priority": "Medium",
         "recurrence": "Daily",
@@ -114,8 +11,62 @@
     {
         "id": "b548402d-a3c6-44b4-a7c8-c4d76b604c55",
         "description": "Study: Complete Python notebook in 0.3 minute",
-        "due_time": "2025-12-01T16:34:55.211338",
+        "due_time": "2025-12-02T16:34:55.211338",
         "category": "Study",
+        "priority": "Medium",
+        "recurrence": "Daily",
+        "completed": false
+    },
+    {
+        "id": "b2859e78-6928-4ef3-bf87-4278dfbdfe1d",
+        "description": "learn",
+        "due_time": "2025-12-01T18:53:43.470339",
+        "category": "Work",
+        "priority": "Medium",
+        "recurrence": "Daily",
+        "completed": false
+    },
+    {
+        "id": "b2067281-74fe-4966-811c-14d40778672d",
+        "description": "Learn java",
+        "due_time": "2025-12-02T18:38:44.655884",
+        "category": "Work",
+        "priority": "Medium",
+        "recurrence": "Daily",
+        "completed": false
+    },
+    {
+        "id": "d820e855-60fd-4272-9fc8-1e9820c8d22b",
+        "description": "Learn Java",
+        "due_time": "2025-12-02T18:44:10.577237",
+        "category": "Work",
+        "priority": "Medium",
+        "recurrence": "Daily",
+        "completed": false
+    },
+    {
+        "id": "86542639-8f23-45ed-b9e2-7ca2ad781140",
+        "description": "Learn react",
+        "due_time": "2025-12-02T18:36:28.160911",
+        "category": "Work",
+        "priority": "Medium",
+        "recurrence": "Daily",
+        "completed": false
+    },
+    {
+        "id": "4f147c64-c9f1-4282-94dc-5b39b60f2f7b",
+        "description": "call office",
+        "due_time": "2025-12-02T18:38:34.433525",
+        "category": "Work",
+        "priority": "Medium",
+        "recurrence": "Daily",
+        "completed": false
+    },
+    {
+        "id": "e12df6a3-c3b3-4ff1-982d-170a11b0f295",
+        "description": "call office",
+        "due_time": "2025-12-01T19:02:20.418082",
+        "category": "Work",
         "priority": "Medium",
         "recurrence": "Daily",
         "completed": false
